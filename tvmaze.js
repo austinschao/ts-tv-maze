@@ -12752,7 +12752,6 @@ var $episodesArea = $("#episodesArea");
 var $searchForm = $("#searchForm");
 var BASE_API_URL = "https://api.tvmaze.com/";
 var DEFAULT_IMG = "https://tinyurl.com/tv-missing";
-;
 /** Given a search term, search for tv shows that match that query.
  *
  *  Returns (promise) array of show objects: [show, show, ...].
@@ -12769,10 +12768,11 @@ function getShowsByTerm(term) {
                     resp = _a.sent();
                     shows = resp.data.map(function (program) {
                         var _a;
-                        var id = program.show.id;
-                        var name = program.show.name;
-                        var summary = program.show.summary || "";
-                        var image = ((_a = program.show.image) === null || _a === void 0 ? void 0 : _a.medium) || DEFAULT_IMG;
+                        var show = program.show;
+                        var id = show.id;
+                        var name = show.name;
+                        var summary = show.summary || "";
+                        var image = ((_a = show.image) === null || _a === void 0 ? void 0 : _a.medium) || DEFAULT_IMG;
                         return { id: id, name: name, summary: summary, image: image };
                     });
                     return [2 /*return*/, shows];
@@ -12827,9 +12827,53 @@ $searchForm.on("submit", function (evt) {
 /** Given a show ID, get from API and return (promise) array of episodes:
  *      { id, name, season, number }
  */
-// async function getEpisodesOfShow(id) { }
-/** Write a clear docstring for this function... */
-// function populateEpisodes(episodes) { }
+function getEpisodesOfShow(showId) {
+    return __awaiter(this, void 0, void 0, function () {
+        var resp, shows;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0: return [4 /*yield*/, axios_1.default.get("".concat(BASE_API_URL, "shows/").concat(showId, "/episodes"))];
+                case 1:
+                    resp = _a.sent();
+                    shows = resp.data.map(function (show) {
+                        var id = show.id, name = show.name, season = show.season, number = show.number;
+                        return { id: id, name: name, season: season, number: number };
+                    });
+                    return [2 /*return*/, shows];
+            }
+        });
+    });
+}
+/** Given list of epsiodes, create markup for each and append to DOM */
+function populateEpisodes(episodes) {
+    $episodesArea.empty();
+    for (var _i = 0, episodes_1 = episodes; _i < episodes_1.length; _i++) {
+        var episode = episodes_1[_i];
+        var $episode = $("<li id=\"".concat(episode.id, "\">\n        ").concat(episode.name, " (season, ").concat(episode.season, ", number ").concat(episode.number, ")\n      </li>\n      "));
+        $episodesArea.append($episode);
+    }
+    $showsList.hide();
+    $episodesArea.show();
+}
+/** Click event that fires API call and appends episode to DOM. */
+function handleClick(evt) {
+    return __awaiter(this, void 0, void 0, function () {
+        var $episode, showId, episodes;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    $episode = $(evt.target.closest(".Show"));
+                    showId = $episode.data().showId;
+                    return [4 /*yield*/, getEpisodesOfShow(showId)];
+                case 1:
+                    episodes = _a.sent();
+                    populateEpisodes(episodes);
+                    return [2 /*return*/];
+            }
+        });
+    });
+}
+$showsList.on('click', ".Show-getEpisodes", handleClick);
 
 
 /***/ })
